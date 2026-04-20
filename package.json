@@ -1,0 +1,18 @@
+{
+  "name": "serverproekt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mainserver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "mime": "^4.1.0",
+    "url-parse": "^1.5.10",
+    "websocket": "^1.0.35"
+  }
+}
