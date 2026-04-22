@@ -32,6 +32,15 @@ function writeMessage(message) {
 
     chatfield.appendChild(elementli);
     elementli.appendChild(elementp);
+    document.querySelector('.chat #chatfield').scrollTo(0, document.querySelector('.chat #chatfield').scrollHeight)
+    return elementp;
+}
+
+// написать от лица сервера
+function writeSystemMessage(message) {
+    const div = writeMessage(message);
+
+    div.id = "system"
 }
 
 function sendToWSServer(type, payload) {
@@ -57,9 +66,8 @@ function onOpen() {
         {"username": username}
     )
     sendToWSServer("join", 
-        {"username": username}
+        {}
     )
-    writeMessage(`You ( ${username} ) have joined the chat`)
 }
 
 // информация с WSServer
@@ -67,16 +75,15 @@ function onMessage(event) {
     const data = JSON.parse(event.data);
     const message = data.payload.message;
     let name = data.payload.username;
-    
     switch (data.type) {
         case "join":
-            writeMessage(name + " has joined the chat")
+            writeSystemMessage(name + " has joined the chat")
             break;
         case "message":
             writeMessage(name + ": " + message)
             break;
         case "left":
-            writeMessage(name + " has left the chat")
+            writeSystemMessage(name + " has left the chat")
             break;
     }
 }
@@ -140,6 +147,6 @@ window.addEventListener("load", () => {
 
     ws.addEventListener('open', onOpen)
     ws.addEventListener('message', onMessage)
-    ws.addEventListener('close',  writeMessage("Connection Closed"))
-    ws.addEventListener('error', writeMessage("Connection Error"))
+    ws.addEventListener('close',  () => {writeSystemMessage("Connection Error")})
+    ws.addEventListener('error', () => {writeSystemMessage("Connection Error")})
 })

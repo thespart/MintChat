@@ -9,6 +9,7 @@ username
 */
 
 const connectedusers = {} // подключенные люди
+const lastmessages = [] // последние сообщения
 const customProtocol = "secretprotocol"
 
 // --------- helper functions --------- //
@@ -31,10 +32,11 @@ function broadcast(response) {
 function messageHandler(message, connection) {
 	let k = getConnectionKey(connection);
 	let response;
+	let username = connectedusers[k].username;
 	switch (message.type) {
 		case "setusername": {
-			let username = message.payload.username;
-			connectedusers[k].username = username;
+			console.log(message);
+			connectedusers[k].username = message.payload.username;
 			}
 			break;
 
@@ -45,6 +47,18 @@ function messageHandler(message, connection) {
 					"username": connectedusers[k].username,
 				}
 			}
+
+			for (let i=0; i<lastmessages.length; i++) {
+				console.log(lastmessages[i])
+				connectedusers[k].connection.send(JSON.stringify({
+					"type": "message",
+					"payload": {
+						"username": lastmessages[i].username,
+						"message": lastmessages[i].message,
+					}
+				}))
+			}
+
 			broadcast(response);
 			break;
 
@@ -57,6 +71,7 @@ function messageHandler(message, connection) {
 					"message": text
 				}
 			}
+			lastmessages.push({'message': message.payload.message, "username": username});
 			broadcast(response);
 			break;
 	} 

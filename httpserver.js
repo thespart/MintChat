@@ -84,5 +84,5 @@ function HttpLogic(request, response) {
 
 // это мы используем в mainserver.js
 export default function initHTTPServer() {
-    return http.createServer(HttpLogic).listen(port);
+    return http.createServer(HttpLogic).listen(port, '0.0.0.0');
 };
