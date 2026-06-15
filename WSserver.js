@@ -9,13 +9,14 @@ username
 */
 
 const connectedusers = {} // подключенные люди
+const usernames = {} // все зарегестрированные ники
+let users = 0; // скуолько людей на сервере
 const lastmessages = [] // последние сообщения
 const customProtocol = "secretprotocol"
 
 // --------- helper functions --------- //
 function getConnectionKey(connection) {
 	let socket = connection.socket; // The underlying socket
-
 	return socket.remoteAddress + socket.remotePort;
 }
 
@@ -41,10 +42,12 @@ function messageHandler(message, connection) {
 			break;
 
 		case "join":
+			users++;
 			response = {
 				'type': "join",
 				"payload": {
 					"username": connectedusers[k].username,
+					"message": users,
 				}
 			}
 
@@ -75,7 +78,9 @@ function messageHandler(message, connection) {
 			broadcast(response);
 			break;
 	} 
-	
+	if (lastmessages.length > 50) {
+		lastmessages.splice(0, 1);
+	}
 	console.log(response)
 }
 
@@ -100,11 +105,14 @@ function onClose(reason, description) {
 	let username = connectedusers[k].username;
 
 	delete connectedusers[k];
-	
+
+	users--;
+
 	let response = {
 		'type': 'left',
 		'payload': {
-			'username': username
+			'username': username,
+			'message': users,
 		}
 	};
 
@@ -113,7 +121,6 @@ function onClose(reason, description) {
 
 function onConnect(connection) {
 	const k = getConnectionKey(connection);
-	console.log(k)
 	connectedusers[k] = {
 		'connection': connection,
 		'username': null,

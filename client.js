@@ -2,9 +2,9 @@ const chatfield = document.querySelector(".chat #chatfield #messages");
 const sendbutton = document.querySelector(".chat #inputs #sendbutton");
 const sendfield = document.querySelector(".chat #inputs #sendfield");
 const usernamefield = document.querySelector(".chat #inputs #username");
+const usercount = document.querySelector("#count");
 
 const customProtocol = "secretprotocol";
-
 
 /*
 
@@ -15,12 +15,16 @@ types:
 'setusername'
 */
 // лист с разными именами
-const randomNames = ["John", "Sasha", "Chelovek", "Mint", "MintLover", "Alex", "Myata", "Man", "Woman", "Sous"]
+const randomNames = ["John", "Sasha", "Chelovek", "Mint", "MintLover", "Alex", "Myata", "Man", "Woman", "Sous"];
 let ws;
 let username;
 
 function Randomizer(min, max) {
-    return Math.floor(Math.random() * (max-min+1)) + min
+    return Math.floor(Math.random() * (max-min+1)) + min;
+}
+
+function RandomColor(min, max) {
+    return `rgb(${Randomizer(min, max)},${Randomizer(min, max)},${Randomizer(min, max)})`;
 }
 
 // написать в чат
@@ -28,8 +32,9 @@ function writeMessage(message) {
     const elementli = document.createElement("li");
     const elementp = document.createElement('p');
 
-    elementp.textContent = message
+    elementp.textContent = message;
 
+    
     chatfield.appendChild(elementli);
     elementli.appendChild(elementp);
     document.querySelector('.chat #chatfield').scrollTo(0, document.querySelector('.chat #chatfield').scrollHeight)
@@ -59,9 +64,31 @@ function parseLocation(url) {
 }
 
 function onOpen() {
-    username = randomNames[Randomizer(0,randomNames.length-1)] + Randomizer(0,100)
+    const saveduser = JSON.parse(localStorage.getItem('user'));
+    if (saveduser == undefined) {
+        pickingname();
+    } else {
+        username = saveduser.username;
+    }
+
+    function pickingname() {
+        let userprompt = prompt("TYPE YOUR NAME (its impossible to change your name later!):", "");
+        if (userprompt) {
+            if (userprompt.length < 20) {
+                localStorage.setItem('user', JSON.stringify({ username: userprompt }))
+                username = userprompt;
+            } else {
+                alert("name is too long, consider picking name with less than 20 characters");
+                pickingname();
+            }
+        } else {
+            alert("no name has choosen, consider picking new name");
+            pickingname();
+        };
+    }
+
     usernamefield.value = username;
-    console.log(username)
+    console.log(username);
     sendToWSServer("setusername", 
         {"username": username}
     )
@@ -69,21 +96,23 @@ function onOpen() {
         {}
     )
 }
-
 // информация с WSServer
 function onMessage(event) {
     const data = JSON.parse(event.data);
     const message = data.payload.message;
-    let name = data.payload.username;
+    const name = data.payload.username;
+
     switch (data.type) {
         case "join":
             writeSystemMessage(name + " has joined the chat")
+            usercount.textContent = "users in chat: " + message;
             break;
         case "message":
             writeMessage(name + ": " + message)
             break;
         case "left":
             writeSystemMessage(name + " has left the chat")
+            usercount.textContent = "users in chat: " + message;
             break;
     }
 }
@@ -97,7 +126,7 @@ async function UIMessage() {
 
     const message = sendfield.value;
 
-    if (message == '') {
+    if (message == '' || message.length > 100) {
         readytosend = true;
         return;
     }
@@ -138,12 +167,8 @@ usernamefield.addEventListener("change",(event) => {
 // ждем пока клиент полностью загрузится
 window.addEventListener("load", () => {
     const ourURL = parseLocation(window.location);
-
-    if (ourURL.protocol == "https:") {
-        ws = new WebSocket("wss://" + ourURL.host, customProtocol)
-    } else {
-        ws = new WebSocket("ws://" + ourURL.host, customProtocol)
-    }
+    
+    ws = new WebSocket("ws://" + ourURL.host, customProtocol);
 
     ws.addEventListener('open', onOpen)
     ws.addEventListener('message', onMessage)
